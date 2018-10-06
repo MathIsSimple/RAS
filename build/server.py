@@ -5,6 +5,7 @@
     File name: server.py
     Author: MathIsSimple
     Python Version: 3.7.0
+    Type: Build
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 '''
@@ -13,22 +14,55 @@
 
 import time
 import socket
+
 from sys import argv
-from sys import path
+from os  import walk
+from os  import path
 
-path.insert(0, './../lib/')
+# File Manager Functions
 
-# Import needed custom python modules
+def getFilesInDir(dir):
+    files = []
 
-from hasing      import encrypt, decrypt
-from fileManager import getFilesInDir
-from fileManager import createWritableFile
+    for (dirpath, dirnames, filenames) in walk(dir):
+        files.extend(filenames)
 
-# Global Variables
+    return files
 
-PORT = 64500
+def getFileExtension(f):
+    return f[-4:]
 
-# All of the functions needed for this project to work
+def fileExists(f):
+    return path.isfile(f)
+
+def createWritableFile(loc):
+    f = open(loc, "w+")
+    return f
+
+# Hasing Functions
+
+def modify(message):
+    output = ""
+
+    for l in message:
+        index  = characters.find(l)
+        index2 = len(characters) - 1 - index
+        letter = characters[index2]
+        output = output + letter
+    
+    return output
+
+def encrypt(message):
+    output = modify(message)
+    output = output[::-1]
+    return output
+
+def decrypt(message):
+    output = message[::-1]
+    output = modify(output)
+    return output
+
+# Create Socket Connection
 
 def createConnexion(host, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -76,11 +110,14 @@ def createLog():
 
 # Ask for the port if it hasn't been given as a command line argument
 
+PORT = 64500
+
 if len(argv) > 1:
     PORT = int(argv[1])
 else:
     PORT = int(input("On which port do you want the server to be created on ? : "))
 
+characters       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'\?!&+*|`^@[]=#~-_<>(){}§\"$%µ£¤ç "
 sock, conn, addr = createConnexion("127.0.0.1", PORT)
 
 f = createLog()

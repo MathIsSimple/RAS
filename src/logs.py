@@ -13,11 +13,11 @@
 
 from sys import path
 
-sys.path.insert(0, './../lib/')
+path.insert(0, './../lib/')
 
 # Import needed custom python modules
 
-from hasing import modify
+from hasing      import decrypt
 from fileManager import getFilesInDir
 from fileManager import getFileExtension
 from fileManager import fileExists
@@ -43,7 +43,7 @@ if fileExists(log_to_open_location):
     while True:
         line = f.readline().replace("\n", "").replace("\r", "")
         if line == "": break
-        print(modify(line))
+        print(decrypt(line))
     
     f.close()
     exit(0)

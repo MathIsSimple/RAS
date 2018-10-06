@@ -1,0 +1,6 @@
+{
+    "python.linting.pylintEnabled": false,
+    "files.exclude": {
+        "**/.git": false,
+      },
+}

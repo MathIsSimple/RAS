@@ -23,3 +23,13 @@ def modify(message):
         output = output + letter
     
     return output
+
+def encrypt(message):
+    output = modify(message)
+    output = output[::-1]
+    return output
+
+def decrypt(message):
+    output = message[::-1]
+    output = modify(output)
+    return output
