@@ -1,4 +1,4 @@
 @echo on
-cd src
+cd build
 python client.py
 pause

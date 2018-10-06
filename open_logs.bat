@@ -1,4 +1,4 @@
 @echo on
-cd src
+cd build
 python logs.py
 pause
