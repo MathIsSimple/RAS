@@ -15,6 +15,7 @@ import time
 import socket
 from sys import argv
 from sys import path
+from os  import mkdir
 
 path.insert(0, './../lib/')
 
@@ -42,24 +43,50 @@ def getTime():
     return int(round(time.time() * 1000))
 
 def send(data):
+    global f2
+    global sendingCommands
+
     conn.sendall(encrypt(str(data)).encode())
 
+    if sendingCommands == True:
+        if data == "END":
+            f2.close()
+
 def receiveData():
+    global receivingInfo
+    global f1
+    global f2
+
     rcv = decrypt(conn.recv(1024).decode("utf-8", "ignore"))
 
     if rcv != "END":
-        f.write(encrypt(rcv))
-        f.write("\n")
+        if receivingInfo == True:
+            f1.write(encrypt(rcv))
+            f1.write("\n")
+        else:
+            f2.write(encrypt(rcv))
+            f2.write("\n")
+    else:
+        if receivingInfo == True:
+            f1.close()
 
     return rcv
 
-def createLog():
-    logs = getFilesInDir("./../logs/")
+def createLogs():
+    log_dir = "./../logs/"
+    try:
+        mkdir(log_dir)
+        print("Created Log Folder")
+    except FileExistsError:
+        print("Log Folder Already Exists")
+
+    logs = getFilesInDir(log_dir)
     biggest_number = 0
     hadANumber     = False
 
     for log in logs:
-        log_number = int(log[4:-4])
+        print(log)
+        log_number = int(log[3:-4])
         if hadANumber == True:
             if log_number > biggest_number:
                 biggest_number = log_number
@@ -69,10 +96,12 @@ def createLog():
 
     log_number = biggest_number + 1
 
-    file_name = "log_"+str(log_number)+".txt"
-    f = createWritableFile("../logs/"+file_name)
+    file_name1 = "inf"+str(log_number)+".txt"
+    file_name2 = "log"+str(log_number)+".txt"
+    f1 = createWritableFile(log_dir+file_name1)
+    f2 = createWritableFile(log_dir+file_name2)
 
-    return f
+    return (f1, f2)
 
 # Ask for the port if it hasn't been given as a command line argument
 
@@ -83,7 +112,7 @@ else:
 
 sock, conn, addr = createConnexion("127.0.0.1", PORT)
 
-f = createLog()
+f1, f2 = createLogs()
 print("Created Log")
 
 receivingInfo   = True
@@ -101,8 +130,8 @@ while True:
     if sendingCommands:
         command = input("Command To Execute ")
         if command != "END":
-            f.write(encrypt(command))
-            f.write("\n")
+            f2.write(encrypt(command))
+            f2.write("\n")
             send(command)
             last_rcv_time = getTime()
 
@@ -120,6 +149,5 @@ while True:
                         break
         else:
             send("END")
-            f.close()
             sock.close()
             exit(0)

@@ -6,7 +6,7 @@
     Author: MathIsSimple
     Python Version: 3.7.0
     Type: Build
-    Build Version: 0.6
+    Build Version: 0.6b
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 '''
@@ -83,29 +83,38 @@ def createWritableFile(loc):
     return f
 
 print("Open Logs")
-logs = getFilesInDir("./../logs/")
 
-for log in logs:
-    print("Log File : " + log)
+log_dir = "./logs/"
 
-log_to_open = input("File to Open : ")
-extension   = getFileExtension(log_to_open)
+def start():
+    logs = getFilesInDir(log_dir)
 
-if extension != ".txt":
-    log_to_open = log_to_open + ".txt"
+    for log in logs:
+        print("Log File : " + log)
 
-log_to_open_location = "./../logs/"+log_to_open
+    log_to_open = input("File to Open : ")
+    print("")
+    if log_to_open == "END":
+        exit(0)
+    extension   = getFileExtension(log_to_open)
 
-if fileExists(log_to_open_location):
-    f = open(log_to_open_location, "r")
-    print("Opened log")
+    if extension != ".txt":
+        log_to_open = log_to_open + ".txt"
 
-    while True:
-        line = f.readline().replace("\n", "").replace("\r", "")
-        if line == "": break
-        print(decrypt(line))
-    
-    f.close()
-    exit(0)
-else:
-    print("This log doesn't exist")
+    log_to_open_location = log_dir+log_to_open
+
+    if fileExists(log_to_open_location):
+        f = open(log_to_open_location, "r")
+        print("Opened log")
+
+        while True:
+            line = f.readline().replace("\n", "").replace("\r", "")
+            if line == "": break
+            print(decrypt(line))
+        
+        f.close()
+    else:
+        print("This log doesn't exist")
+    print("")
+    start()
+start()

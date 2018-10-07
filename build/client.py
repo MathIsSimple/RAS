@@ -6,7 +6,7 @@
     Author: MathIsSimple
     Python Version: 3.7.0
     Type: Build
-    Build Version: 0.6
+    Build Version: 0.6b
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 '''
