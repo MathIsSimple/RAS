@@ -6,6 +6,7 @@
     Author: MathIsSimple
     Python Version: 3.7.0
     Type: Build
+    Build Version: 0.6
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 '''
@@ -18,6 +19,12 @@ import socket
 from sys import argv
 from os  import walk
 from os  import path
+from os  import mkdir
+
+# Global Variables
+
+characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'\?!&+*|`^@[]=#~-_<>(){}§\"$%µ£¤ç "
+bits_per_char = len(bin(len(characters))) - 2
 
 # File Manager Functions
 
@@ -52,13 +59,31 @@ def modify(message):
     
     return output
 
+def longify(message):
+    output = ""
+    for char in message:
+        bin_number = str(bin(characters.find(char)))[2:]
+        for i in range(bits_per_char - len(bin_number)):
+            bin_number = "0" + bin_number
+        output = output + bin_number
+    return output
+
+def delongify(message):
+    output = ""
+    for i in range(int(len(message) / bits_per_char)):
+        char   = int(message[i * bits_per_char:i * bits_per_char + bits_per_char], 2)
+        output = output + characters[char]
+    return output
+
 def encrypt(message):
     output = modify(message)
     output = output[::-1]
+    output = longify(output)
     return output
 
 def decrypt(message):
-    output = message[::-1]
+    output = delongify(message)
+    output = output[::-1]
     output = modify(output)
     return output
 
@@ -88,7 +113,13 @@ def receiveData():
     return rcv
 
 def createLog():
-    logs = getFilesInDir("./../logs/")
+    try:
+        mkdir("logs")
+        print("Created Log Folder")
+    except FileExistsError:
+        print("Log Folder Already Exists")
+    
+    logs = getFilesInDir("./logs/")
     biggest_number = 0
     hadANumber     = False
 
@@ -104,7 +135,7 @@ def createLog():
     log_number = biggest_number + 1
 
     file_name = "log_"+str(log_number)+".txt"
-    f = createWritableFile("../logs/"+file_name)
+    f = createWritableFile("./logs/"+file_name)
 
     return f
 
@@ -117,7 +148,6 @@ if len(argv) > 1:
 else:
     PORT = int(input("On which port do you want the server to be created on ? : "))
 
-characters       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'\?!&+*|`^@[]=#~-_<>(){}§\"$%µ£¤ç "
 sock, conn, addr = createConnexion("127.0.0.1", PORT)
 
 f = createLog()
