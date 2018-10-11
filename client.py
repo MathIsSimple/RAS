@@ -4,9 +4,9 @@
 '''
     File name: client.py
     Author: MathIsSimple
-    Python Version: 3.7.0
+    Using: Python 3.7.0
     Type: Build
-    Build Version: 0.6b
+    Build Version: 0.7
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 '''
@@ -24,7 +24,7 @@ from subprocess import PIPE
 
 # Global Variables
 
-characters    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'\?!&+*|`^@[]=#~-_<>(){}§\"$%µ£¤ç "
+characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'!&+*|`^@[]=#~-_<>(){}§$%µ£¤ç ";
 bits_per_char = len(bin(len(characters))) - 2
 Connected     = False
 GatheredInfo  = False
