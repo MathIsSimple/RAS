@@ -18,7 +18,7 @@ const fs       = require('fs');
 const characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'!&+*|`^@[]=#~-_<>(){}§$%µ£¤ç ";
 const bits_per_char = bin(characters.length).length;
 
-const LOGS     = "./logs/";
+const LOGS     = "./../logs/";
 const sockPort = 64500;
 const httpPort = 80;
 
@@ -61,17 +61,15 @@ sockServer.listen(sockPort, (err) => {
 /* Connection Handling */
 
 httpServer.on('request', (request, response) => {
-    let url         = request.url;
+    const directory = "./../web";
+    let url         = directory+request.url;
     let contentType = "";
 
-    const method    = request.method;
-
-    if (url == "/") {
-        url = "./index.html"; 
+    if (url == directory+"/") {
+        url += "index.html"; 
         contentType = "text/html";
     } else {
-        url = "." + url;
-        if (url != "./socket_info") {
+        if (url != directory + "/socket_info") {
             if (url.includes(".css")) {
                 contentType = "text/css";
             } else if (url.includes(".js")) {
@@ -90,7 +88,7 @@ httpServer.on('request', (request, response) => {
 
                 data = data.toString();
 
-                if (url == "./index.html") {
+                if (url == directory + "/index.html") {
                     data = data.replace("#sss", sockServerActive);
                     data = data.replace("#sws", httpServerActive);
 
@@ -104,7 +102,7 @@ httpServer.on('request', (request, response) => {
             }
         });
     } else {
-        if (url == "./socket_info") {
+        if (url == directory + "/socket_info") {
             let res = {
                 info: []
             };

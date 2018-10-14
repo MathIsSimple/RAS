@@ -13,7 +13,7 @@
 const fs       = require('fs');
 const readline = require('readline');
 
-const LOGS  = "./logs/";
+const LOGS  = "./../logs/";
 
 if (fs.existsSync(LOGS) == false) {
     fs.mkdirSync(LOGS);
