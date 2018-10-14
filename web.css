@@ -12,15 +12,35 @@ body {
 
 header {
     height: 48px;
-    width: 100%;
+    width: 80%;
     display: block;
     text-align: center;
     font-weight: bold;
     font-size: 40px;
-    background: linear-gradient(#dcdde1, #f5f6fa);
+    float: right;
+    background-image: linear-gradient(to left, #dcdde1, #f5f6fa);
 }
 
 table, tr {width: 100%;}
+
+nav {
+    width: 20%;
+    height: 100vh;
+    display: block;
+    float: left;
+    background-image: linear-gradient(to right, #dcdde1, #f5f6fa);
+    text-align: center;
+    font-weight: bolder;
+}
+
+nav > * {
+    font-size: 25px;
+}
+
+div#content {
+    width: 80%;
+    float: left;
+}
 
 div#content > table#status > thead > tr > th {
     width: 50%;
