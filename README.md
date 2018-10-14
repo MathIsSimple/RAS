@@ -10,14 +10,14 @@ Only use this on your own computer(s) or with authorisation!
 
 How to instal : 
 
-    + Install nodejs
-    + Clone the repository
-    + run the server and the client(s)
++ Install nodejs
++ Clone the repository
++ run the server and the client(s)
 
 Commands :
 
-    + WRITE_LOG to write a log
-    + CLIENTS to show all the connected clients
-    + CHANGE_CLIENT to change wich client you are executing commands on
-    + CLIENT_INFO to show information about the current client
-    + END to shutdown the server
++ WRITE_LOG to write a log
++ CLIENTS to show all the connected clients
++ CHANGE_CLIENT to change wich client you are executing commands on
++ CLIENT_INFO to show information about the current client
++ END to shutdown the server
