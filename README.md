@@ -1,23 +1,45 @@
-# Genaral Information
+# Warning 
 
-## Warning 
-
-I have created this project to learn about custom encoding and python sockets, this projected isn't made to be used with maliscious intent.
+I have created this project to learn about custom encoding and python sockets, this projected isn't made to be used with maliscious intent and should be used in my opinion like ssh is.
 
 Only use this on your own computer(s) or with authorisation!
 
-## Instructions
+# INFO
 
-How to instal : 
+Made by MathIsSimple
+Made to be used along with ssh
 
-+ Install nodejs
+# Instructions
+
+### How to instal : 
+
++ Install nodejs [From this link](https://nodejs.org/en/)
++ Install git [From this link](https://git-scm.com/)
++ install python3 [From this link](https://www.python.org/)
 + Clone the repository
-+ run the server and the client(s)
+    ```
+    cd path/to/your/lococation/to/install
+    git clone https://github.com/MathIsSimple/RAS.git
+    ```
+    
+### How to use : 
 
-Commands :
++ Got to the exec folder
++ Open the server
++ Open one or more clients
+
+### Server Commands :
 
 + WRITE_LOG to write a log
 + CLIENTS to show all the connected clients
 + CHANGE_CLIENT to change wich client you are executing commands on
 + CLIENT_INFO to show information about the current client
 + END to shutdown the server
+
+# What is comming !
+
++ A GUI for the client and maybe for the server
++ The ability to download / upload files
++ And more !
+
+Made with passion for programming.
