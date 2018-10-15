@@ -18,9 +18,11 @@ import time
 import socket
 import requests
 import platform as plat
+import pygame
 
 from subprocess import Popen
 from subprocess import PIPE
+from threading  import Thread
 
 # Global Variables
 
@@ -28,9 +30,70 @@ characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345
 bits_per_char = len(bin(len(characters))) - 2
 Connected     = False
 GatheredInfo  = False
+Reconnect = True
 sock = None
 PORT = 64500
 Info = None
+cmds = []
+
+# GUI
+
+def GUI():
+    global Reconnect
+    global Connected
+
+    pygame.init()
+    pygame.font.init()
+
+    dimensions = (300, 150)
+    window = pygame.display.set_mode(dimensions)
+    fonts  = [pygame.font.SysFont('Arial', 20, bold=1)]
+    pygame.display.set_caption("RAS Client")
+
+    black = (0, 0, 0)
+    red   = (255, 0, 0)
+    green = (0, 255, 0)
+    blue  = (0, 0, 255)
+    white = (255, 255, 255)
+
+    run = True
+
+    while run:
+        pygame.time.delay(100)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                print(str(x) + " " + str(y))
+                if x > 5 and x < 125 and y > 115 and y < 145:
+                    sendData("END")
+                    Reconnect = False
+                    Connected = False
+
+        pygame.draw.rect(window, white, (0, 0, 500, 500))
+        pygame.draw.rect(window,   red, (5, 115, 120, 30))
+
+        texts = []
+
+        texts.append([fonts[0].render('RAS : Remote Acces Software', False, black), (5, 5)])
+
+        color = green
+
+        if Connected == False:
+            color = red
+
+        texts.append([fonts[0].render('Connected : ' + str(Connected), False, color), (5, 40)])
+        texts.append([fonts[0].render('Received Commands : ' + str(len(cmds)), False, black), (5, 75)])
+        texts.append([fonts[0].render('Disconnect', False, white), (12, 117)])
+
+        for text in texts:
+            window.blit(text[0], text[1])
+
+        pygame.display.update()
+
+    pygame.quit()
 
 # Encryption Files
 
@@ -186,6 +249,7 @@ def handleCommands():
         if data:
             if data != "END":
                 print("Command : " + data)
+                cmds.append(data)
                 output = getCommandOutput(data)
                 sendArray(output)
             else:
@@ -199,6 +263,7 @@ def start():
     global GatheredInfo
     global PORT
     global Info
+    global Reconnect
 
     if GatheredInfo == False:
         Info = getInfo()
@@ -212,10 +277,17 @@ def start():
         print("Sent Info")
         print("Handling Commands")
         handleCommands()
-    
+
     while Connected == False:
-        sock = None
-        print("Attempting reconnect")
-        start()
+        if Reconnect == True:
+            sock = None
+            print("Attempting reconnect")
+            start()
+
+# Threads
+
+t1 = Thread(target=GUI)
+t1.start()
 
 start()
+t1.join()

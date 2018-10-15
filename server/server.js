@@ -161,6 +161,12 @@ sockServer.on('connection', function(socket) {
                     clients[socket_index].variables.responses[clients[socket_index].variables.responses.length - 1].push(decrypted);
                 }
             } else {
+                if (clients[socket_index].variables.status.receivingInfo == false 
+                    && clients[socket_index].variables.status.sendingComands.waitingForResponse == false) {
+                        socket.end()
+                        clients.slice(socket_index, 1)
+                }
+
                 if (clients[socket_index].variables.status.receivingInfo == true) {
                     clients[socket_index].variables.status.receivingInfo = false;
                     clients[socket_index].variables.status.sendingComands.sendingComands = true;
@@ -182,7 +188,7 @@ sockServer.on('connection', function(socket) {
 
     socket.on('end', () => {
         console.log('%s disconnected', clientAddress);
-        sockets.slice(socket_index, 1)
+        clients.slice(socket_index, 1)
     });
 });
 

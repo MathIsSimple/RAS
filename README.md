@@ -16,6 +16,10 @@ Made to be used along with ssh
 + Install nodejs [From this link](https://nodejs.org/en/)
 + Install git [From this link](https://git-scm.com/)
 + install python3 [From this link](https://www.python.org/)
++ Install pygame (for the gui)
+    ```
+    pip install pygame
+    ```
 + Clone the repository
     ```
     cd path/to/your/lococation/to/install
@@ -38,7 +42,6 @@ Made to be used along with ssh
 
 # What is comming !
 
-+ A GUI for the client and maybe for the server
 + The ability to download / upload files
 + And more !
 
