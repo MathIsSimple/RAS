@@ -10,6 +10,8 @@
 
 */
 
+console.log("Server booting up!");
+
 const readline = require('readline');
 const http     = require('http');
 const net      = require('net');
@@ -17,10 +19,7 @@ const fs       = require('fs');
 
 const characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'!&+*|`^@[]=#~-_<>(){}§$%µ£¤ç ";
 const bits_per_char = bin(characters.length).length;
-
-const LOGS     = "./../logs/";
-const sockPort = 64500;
-const httpPort = 80;
+const LOGS          = "./../logs/";
 
 let clients = [];
 let current_socket_index = null;
@@ -33,179 +32,228 @@ if (fs.existsSync(LOGS) == false) {
     fs.mkdirSync(LOGS);
 }
 
+const config    = JSON.parse(fs.readFileSync("res/config.json").toString());
+const sockPort  = config.sockPort;
+const httpPort  = config.httpPort;
+const maxConne  = config.maxConnections;
+const constants = JSON.parse(fs.readFileSync("res/constants.json").toString());
+const listCmds  = constants.listCmds;
+
+console.log("Read and applied the config");
+
 /* CREATING SERVERS */
 
-let sockServer = net.createServer();
+let sockServer, httpServer;
 let sockServerActive = false;
-let httpServer = http.createServer();
 let httpServerActive = false;
+
+if (config.sock == true) {
+    sockServer = net.createServer();
+}
+if (config.http == true) {
+    httpServer = http.createServer();
+}
 
 /* LISTENING */
 
-httpServer.listen(httpPort, (err) => {
-    if (err) {
-        throw err;
-    }
-    console.log('Port %s successfully opened for the http server, awaiting requests...', httpPort);
-    httpServerActive = true;
-});
+if (config.http == true) {
+    httpServer.listen(httpPort, (err) => {
+        if (err) {
+            throw err;
+        }
+        console.log('Port %s successfully opened for the http server, awaiting requests...', httpPort);
+        httpServerActive = true;
+    });
+}
 
-sockServer.listen(sockPort, (err) => {
-    if (err) {
-        throw err;
-    }
-    console.log('Port %s successfully opened for the socket server, awaiting connections...', sockPort);
-    sockServerActive = true;
-});
+if (config.sock == true) {
+    sockServer.listen(sockPort, (err) => {
+        if (err) {
+            throw err;
+        }
+        console.log('Port %s successfully opened for the socket server, awaiting connections...', sockPort);
+        sockServerActive = true;
+    });
+}
 
 /* Connection Handling */
 
-httpServer.on('request', (request, response) => {
-    const directory = "./../web";
-    let url         = directory+request.url;
-    let contentType = "";
+// HTTP SERVER
 
-    if (url == directory+"/") {
-        url += "index.html"; 
-        contentType = "text/html";
-    } else {
-        if (url != directory + "/socket_info") {
-            if (url.includes(".css")) {
-                contentType = "text/css";
-            } else if (url.includes(".js")) {
-                contentType = "text/javascript";
-            }
+if (config.http) {
+    httpServer.on('request', (request, response) => {
+        const directory = "./../web";
+        let url         = directory+request.url;
+        let contentType = "";
+
+        if (url == directory+"/") {
+            url += "index.html"; 
+            contentType = "text/html";
         } else {
-           contentType = "application/json"; 
-        }
-    }
-    if (fs.existsSync(url)) {
-        fs.readFile(url, (err, data) => {
-            if (err) {
-                throw err;
+            if (url != directory + "/socket_info") {
+                if (url.includes(".css")) {
+                    contentType = "text/css";
+                } else if (url.includes(".js")) {
+                    contentType = "text/javascript";
+                }
             } else {
-                response.writeHead(200, {'Content-Type': contentType});
-
-                data = data.toString();
-
-                if (url == directory + "/index.html") {
-                    data = data.replace("#sss", sockServerActive);
-                    data = data.replace("#sws", httpServerActive);
-
-                    data = data.replace("#pss", sockPort);
-                    data = data.replace("#pws", httpPort);
-
-                    data = data.replace("#nc", clients.length);
-                }
-
-                response.end(data);
-            }
-        });
-    } else {
-        if (url == directory + "/socket_info") {
-            let res = {
-                info: []
-            };
-
-            for (let client of clients) {
-                res.info.push(client.variables.info);
-            }
-
-            response.writeHead(200, {'Content-Type': contentType});
-            response.end(JSON.stringify(res))
-        } else {
-            response.writeHead(404, {'Content-Type': 'text/plain'});
-            response.end("404 File Not Found");
-        }
-    }
-});
-
-sockServer.on('connection', function(socket) {
-    const socket_index = clients.length;
-
-    clients.push(
-        {
-            socket: socket,
-            variables: {
-                info: [],
-                commands: [],
-                responses: [],
-                address: socket.remoteAddress,
-                port: socket.remotePort,
-                status: {
-                    receivingInfo: true,
-                    sendingComands: {
-                        sendingComands: false,
-                        waitingForResponse: false
-                    }
-                }
+            contentType = "application/json"; 
             }
         }
-    );
-
-    if (current_socket_index == null) current_socket_index = socket_index;
-
-    socket.on('data', function(data) {
-        data = data.toString()
-
-        decrypt(data, (decrypted) => {
-            decrypted = decrypted.toString("utf-8");
-
-            if (decrypted != "END") {
-                if (current_socket_index == socket_index) {
-                    console.log("   " + decrypted);
-                }
-                if (clients[socket_index].variables.status.receivingInfo == true) {
-                    clients[socket_index].variables.info.push(decrypted);
+        if (fs.existsSync(url)) {
+            fs.readFile(url, (err, data) => {
+                if (err) {
+                    throw err;
                 } else {
-                    clients[socket_index].variables.responses[clients[socket_index].variables.responses.length - 1].push(decrypted);
+                    response.writeHead(200, {'Content-Type': contentType});
+
+                    data = data.toString();
+
+                    if (url == directory + "/index.html") {
+                        data = data.replace("#sss", sockServerActive);
+                        data = data.replace("#sws", httpServerActive);
+
+                        data = data.replace("#pss", sockPort);
+                        data = data.replace("#pws", httpPort);
+
+                        data = data.replace("#nc", clients.length);
+                    }
+
+                    response.end(data);
                 }
-            } else {
-                if (clients[socket_index].variables.status.receivingInfo == false 
-                    && clients[socket_index].variables.status.sendingComands.waitingForResponse == false) {
-                        socket.end()
-                        clients.slice(socket_index, 1)
+            });
+        } else {
+            if (url == directory + "/socket_info") {
+                let res = {
+                    info: []
+                };
+
+                for (let client of clients) {
+                    res.info.push(client.variables.info);
                 }
 
-                if (clients[socket_index].variables.status.receivingInfo == true) {
-                    clients[socket_index].variables.status.receivingInfo = false;
-                    clients[socket_index].variables.status.sendingComands.sendingComands = true;
-                    clients[socket_index].variables.status.sendingComands.waitingForResponse = false;
-                } 
-                if (clients[socket_index].variables.status.sendingComands.sendingComands == true) {
-                    if (clients[socket_index].variables.status.sendingComands.waitingForResponse == true) {
-                        clients[socket_index].variables.status.sendingComands.waitingForResponse = false;
-                    }
-                    if (clients[socket_index].variables.status.sendingComands.waitingForResponse == false){
-                        if (current_socket_index == socket_index) {
-                            askCommand(socket_index);
+                response.writeHead(200, {'Content-Type': contentType});
+                response.end(JSON.stringify(res))
+            } else {
+                response.writeHead(404, {'Content-Type': 'text/plain'});
+                response.end("404 File Not Found");
+            }
+        }
+    });
+}
+
+// SOCKET SERVER
+
+if (config.sock == true) {
+    console.log("For the list of commands, type : LIST");
+
+    sockServer.on('connection', function(socket) {
+        const socket_index = clients.length;
+        if (socket_index >= maxConne) {
+            socket.end();
+        } else {
+            clients.push(
+                {
+                    socket: socket,
+                    variables: {
+                        info: [],
+                        commands: [],
+                        responses: [],
+                        address: socket.remoteAddress,
+                        port: socket.remotePort,
+                        status: {
+                            receivingInfo: true,
+                            sendingComands: {
+                                sendingComands: false,
+                                waitingForResponse: false
+                            }
                         }
                     }
                 }
-            }
+            );
+        }
+
+        if (current_socket_index == null) current_socket_index = socket_index;
+
+        socket.on('data', function(data) {
+            data = data.toString()
+
+            decrypt(data, (decrypted) => {
+                decrypted = decrypted.toString("utf-8");
+
+                if (decrypted != "END") {
+                    if (current_socket_index == socket_index) {
+                        console.log("   " + decrypted);
+                    }
+                    if (clients[socket_index].variables.status.receivingInfo == true) {
+                        clients[socket_index].variables.info.push(decrypted);
+                    } else {
+                        clients[socket_index].variables.responses[clients[socket_index].variables.responses.length - 1].push(decrypted);
+                    }
+                } else {
+                    if (clients[socket_index].variables.status.receivingInfo == false 
+                        && clients[socket_index].variables.status.sendingComands.waitingForResponse == false) {
+                            socket.end()
+                            clients.slice(socket_index, 1)
+                    }
+
+                    if (clients[socket_index].variables.status.receivingInfo == true) {
+                        clients[socket_index].variables.status.receivingInfo = false;
+                        clients[socket_index].variables.status.sendingComands.sendingComands = true;
+                        clients[socket_index].variables.status.sendingComands.waitingForResponse = false;
+                    } 
+                    if (clients[socket_index].variables.status.sendingComands.sendingComands == true) {
+                        if (clients[socket_index].variables.status.sendingComands.waitingForResponse == true) {
+                            clients[socket_index].variables.status.sendingComands.waitingForResponse = false;
+                        }
+                        if (clients[socket_index].variables.status.sendingComands.waitingForResponse == false){
+                            if (current_socket_index == socket_index) {
+                                askCommand(socket_index);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        socket.on('end', () => {
+            console.log('%s disconnected', clientAddress);
+            clients.slice(socket_index, 1)
         });
     });
-
-    socket.on('end', () => {
-        console.log('%s disconnected', clientAddress);
-        clients.slice(socket_index, 1)
-    });
-});
+}
 
 function askCommand(socket_index) {
     ask('Command to execute : ', (command) => {
+        const time     = new Date();
+        const filename = "log" + time.getHours() + "_" + time.getMinutes() + "_" + time.getSeconds() + ".json";
+        const file     = LOGS + filename;
+        let data       = [];
         switch(command) {
             case "WRITE_LOG":
-                const time = new Date();
-                const filename = "log" + time.getHours() + "_" + time.getMinutes() + "_" + time.getSeconds() + ".json";
-                const file = LOGS + filename;
-                const data = JSON.stringify(clients[socket_index].variables);
+                data = JSON.stringify(clients[socket_index].variables);
 
                 fs.writeFile(file, data, (err) => {
                     if (err != null) {
                         throw err;
                     }
                 });
+
+                askCommand(socket_index);
+                break;
+            case "WRITE_LOGS":
+                let data = {clients: []};
+
+                for (let client of clients) {
+                    data.clients.push(client.variables);
+                }
+
+                fs.writeFile(file, data, (err) => {
+                    if (err != null) {
+                        throw err;
+                    }
+                });
+
                 askCommand(socket_index);
                 break;
             case "CLIENTS":
@@ -232,6 +280,17 @@ function askCommand(socket_index) {
                     console.log(item);
                 }
                 console.log("");
+                askCommand(socket_index);
+                break;
+            case "LIST":
+                console.log("");
+                console.log("Printing all supported commands");
+                console.log("");
+                for (let supportedCommand of listCmds) {
+                    console.log(supportedCommand.name);
+                    console.log(supportedCommand.description);
+                    console.log("");
+                }
                 askCommand(socket_index);
                 break;
             case "END":
@@ -329,4 +388,4 @@ function decrypt(message, callback) {
     output = reverse(output);
     output = modify(output);
     callback(output);
-}
+} 

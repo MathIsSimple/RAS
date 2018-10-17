@@ -30,7 +30,7 @@ characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345
 bits_per_char = len(bin(len(characters))) - 2
 Connected     = False
 GatheredInfo  = False
-Reconnect = True
+Reconnect     = True
 sock = None
 PORT = 64500
 Info = None
@@ -45,15 +45,18 @@ def GUI():
     pygame.init()
     pygame.font.init()
 
-    dimensions = (300, 150)
+    dimensions = (300, 180)
     window = pygame.display.set_mode(dimensions)
-    fonts  = [pygame.font.SysFont('Arial', 20, bold=1)]
+    fonts  = [pygame.font.SysFont('Arial', 20, bold=1),
+              pygame.font.SysFont('Arial', 15, bold=1),
+              pygame.font.SysFont('Arial', 25, bold=1)]
+    
     pygame.display.set_caption("RAS Client")
 
-    black = (0, 0, 0)
-    red   = (255, 0, 0)
-    green = (0, 255, 0)
-    blue  = (0, 0, 255)
+    black = (0,   0,   0  )
+    red   = (255, 0,   0  )
+    green = (0,   255, 0  )
+    blue  = (0,   0,   255)
     white = (255, 255, 255)
 
     run = True
@@ -66,7 +69,6 @@ def GUI():
                 run = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
-                print(str(x) + " " + str(y))
                 if x > 5 and x < 125 and y > 115 and y < 145:
                     sendData("END")
                     Reconnect = False
@@ -77,7 +79,7 @@ def GUI():
 
         texts = []
 
-        texts.append([fonts[0].render('RAS : Remote Acces Software', False, black), (5, 5)])
+        texts.append([fonts[2].render('RAS Client', False, black), (5, 5)])
 
         color = green
 
@@ -87,6 +89,7 @@ def GUI():
         texts.append([fonts[0].render('Connected : ' + str(Connected), False, color), (5, 40)])
         texts.append([fonts[0].render('Received Commands : ' + str(len(cmds)), False, black), (5, 75)])
         texts.append([fonts[0].render('Disconnect', False, white), (12, 117)])
+        texts.append([fonts[1].render('Made By MathIsSimple on github!', False, black), (5, 155)])
 
         for text in texts:
             window.blit(text[0], text[1])
@@ -110,11 +113,13 @@ def modify(message):
 
 def longify(message):
     output = ""
+
     for char in message:
         bin_number = str(bin(characters.find(char)))[2:]
         for i in range(bits_per_char - len(bin_number)):
             bin_number = "0" + bin_number
         output = output + bin_number
+
     return output
 
 def delongify(message):
@@ -122,18 +127,21 @@ def delongify(message):
     for i in range(int(len(message) / bits_per_char)):
         char   = int(message[i * bits_per_char:i * bits_per_char + bits_per_char], 2)
         output = output + characters[char]
+
     return output
 
 def encrypt(message):
     output = modify(message)
     output = output[::-1]
     output = longify(output)
+
     return output
 
 def decrypt(message):
     output = delongify(message)
     output = output[::-1]
     output = modify(output)
+
     return output
 
 # Command Line Functions
@@ -144,6 +152,7 @@ def decodeCommandOutput(output):
     output = output.replace("/r", "").replace("/n", "")
     output = output.replace("/x82", "é").replace("/x8a", "è")
     output = output.replace("/xff", " ")
+
     return output
 
 def getCommandOutput(data):
@@ -152,8 +161,10 @@ def getCommandOutput(data):
 
     while True:
         line = process.stdout.readline()
+
         if line != b"":
             contents = decodeCommandOutput(str(line))
+
             if contents.endswith("'") or contents.endswith('"'):
                 contents = contents[:-1]
             
@@ -176,7 +187,7 @@ def getInfo():
 
     platform  = "Platform : "  + plat.platform()
     system    = "System : "    + plat.system()
-    ip        = "Ip : " + requests.get("https://api.ipify.org/?format=json").json()["ip"]    
+    ip        = "Ip : "        + requests.get("https://api.ipify.org/?format=json").json()["ip"]    
     ip_info   = requests.get("http://api.ipstack.com/"+ip+"?access_key=5666d16d47c94935142e312df7c1afd1&format=1").json()
     continent = "Continent : " + str(ip_info["continent_name"])
     country   = "Country : "   + str(ip_info["country_name"])

@@ -1,0 +1,20 @@
+{
+    "listCmds": [
+        {
+            "name": "CLIENTS",
+            "description": "    Shows all connected clients"
+        },
+        {
+            "name": "CHANGE_CLIENT",
+            "description": "    CHANGE_CLIENT <Client Number> \n    ex: CHANGE_CLIENT 0 or CHANGE_CLIENT 10\n    It is recomended to use the command CLIENTS first"
+        },
+        {
+            "name": "CLIENT_INFO",
+            "description": "    Shows all of the information gathered about the client"
+        },
+        {
+            "name": "LIST",
+            "description": "    Shows this list"
+        }
+    ]
+}

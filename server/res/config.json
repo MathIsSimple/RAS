@@ -1,0 +1,7 @@
+{
+    "httpPort": 80,
+    "sockPort": 64500,
+    "http": true,
+    "sock": true,
+    "maxConnections": 3
+}
