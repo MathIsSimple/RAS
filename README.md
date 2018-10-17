@@ -34,11 +34,7 @@ Made to be used along with ssh
 
 ### Server Commands :
 
-+ WRITE_LOG to write a log
-+ CLIENTS to show all the connected clients
-+ CHANGE_CLIENT to change wich client you are executing commands on
-+ CLIENT_INFO to show information about the current client
-+ END to shutdown the server
+You can find them when you open the server and a client is connected by typing LIST
 
 # What is comming !
 
