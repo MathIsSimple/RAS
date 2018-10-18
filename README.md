@@ -13,7 +13,6 @@ Made to be used along with ssh
 
 ### How to instal : 
 
-+ Install nodejs [From this link](https://nodejs.org/en/)
 + Install git [From this link](https://git-scm.com/)
 + install python3 [From this link](https://www.python.org/)
 + Install pygame (for the gui)
