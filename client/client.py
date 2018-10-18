@@ -18,6 +18,7 @@ import time
 import socket
 import requests
 import platform as plat
+import random
 import pygame
 
 from subprocess import Popen
@@ -36,7 +37,44 @@ PORT = 64500
 Info = None
 cmds = []
 
+g = 0
+n = 0
+p = 0
+
+g_to_server = 0
+diffieKey   = 0
+
+isDiffie    = True
+DiffieStep  = 0
+
 # GUI
+
+def doDiffie():
+    global sock
+    global isDiffie
+    global DiffieStep
+    global g
+    global n
+    global p
+
+    while True:
+        data = sock.recv(1024).decode()
+        if data != "":
+            if isDiffie == True:
+                if DiffieStep == 0:
+                    g = int(data)
+                if DiffieStep == 1:
+                    n = int(data)
+                    p = int(random.uniform(1, n))
+                    g_to_server = (g**p) % n
+                if DiffieStep == 2:
+                    diffieKey = (int(data)**p) % n
+                    sock.sendall(str(g_to_server).encode())
+                    print("Key : " + str(diffieKey))
+                    isDiffie = False
+                    break
+
+                DiffieStep = DiffieStep + 1
 
 def GUI():
     global Reconnect
@@ -284,6 +322,7 @@ def start():
 
     if Connected:
         print("Created Connexion With Server")
+        doDiffie()
         sendArray(Info)
         print("Sent Info")
         print("Handling Commands")

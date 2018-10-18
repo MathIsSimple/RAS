@@ -1,3 +1,3 @@
 cd ../server/
-node server.js
+python server.py
 pause
