@@ -6,9 +6,7 @@
     Author: MathIsSimple
     Python Version: 3.7.0
     Type: Build
-    Build Version: 0.6
-    Disclaimer: I created this project to learn about custom encoding and python sockets,
-                this projected isn't made to be used for maliscious intent. Do so at your own risk
+    Build Version: 0.9
 '''
 
 # Import needed core python modules
@@ -16,6 +14,8 @@
 import time
 import socket
 import random
+import json
+
 from sys import argv
 from os  import walk
 from os  import path
@@ -25,13 +25,15 @@ from os  import mkdir
 
 characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'!&+*|`^@[]=#~-_<>(){}§$%µ£¤ç "
 bits_per_char = len(bin(len(characters))) - 2
+config = json.load(open("res/config.json"))
+PORT   = config["port"]
 
-g = 31
-n = 47
+g = int(random.uniform(100, 7000))
+n = config["n"]
 p = int(random.uniform(1, n))
 
 g_step_1 = (g**p) % n
-key = 0
+key      = 0
 
 # File Manager Functions
 
@@ -121,12 +123,12 @@ def receiveData():
 
 def createLog():
     try:
-        mkdir("logs")
+        mkdir("./../logs")
         print("Created Log Folder")
     except FileExistsError:
         print("Log Folder Already Exists")
     
-    logs = getFilesInDir("./logs/")
+    logs = getFilesInDir("./../logs/")
     biggest_number = 0
     hadANumber     = False
 
@@ -142,18 +144,11 @@ def createLog():
     log_number = biggest_number + 1
 
     file_name = "log_"+str(log_number)+".txt"
-    f = createWritableFile("./logs/"+file_name)
+    f = createWritableFile("./../logs/"+file_name)
 
     return f
 
 # Ask for the port if it hasn't been given as a command line argument
-
-PORT = 64500
-
-if len(argv) > 1:
-    PORT = int(argv[1])
-else:
-    PORT = int(input("On which port do you want the server to be created on ? : "))
 
 sock, conn, addr = createConnexion("127.0.0.1", PORT)
 
