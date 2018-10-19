@@ -31,10 +31,6 @@ Made to be used along with ssh
 + Open the server
 + Open one or more clients
 
-### Server Commands :
-
-You can find them when you open the server and a client is connected by typing LIST
-
 # What is comming !
 
 + The ability to download / upload files
