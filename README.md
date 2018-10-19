@@ -19,6 +19,10 @@ Made to be used along with ssh
     ```
     pip install pygame
     ```
++ Install requests (for the ip information)
+    ```
+    pip install requests
+    ```
 + Clone the repository
     ```
     cd path/to/your/lococation/to/install
