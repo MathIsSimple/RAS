@@ -34,6 +34,7 @@ Made to be used along with ssh
 + Got to the exec folder
 + Open the server
 + Open one or more clients
++ On the server, you can get the contents of a file by type open <File name> ex: open myfile.txt (position relative to client.py)
 
 # The protocol
 
@@ -62,11 +63,12 @@ Made to be used along with ssh
 + From now on, all communication will be encrypted
 + The encryption process is a bit more complicated but it is not worth mentioning because it could be removed
 + The server listens for the client's information
-+ The client sends every 0.05s a piece of information to server, when all of the information has been sent, the client sends "END" to server to let it know that it can now send commands to it
++ The client sends every 0.1s a piece of information to server, when all of the information has been sent, the client sends "END" to server to let it know that it can now send commands to it
 + The client now waits for commands comming from the server
 + When it gets a command, it gets the command's output and adds END at the end to let the server know that the transmission has ended and it can now continue sending commands
 + If the client recieves the command "END" it will shutdown and the server will write a log in the logs directory
 + If there were to be a disconnect, the client will try every 5s to reconnect
++ The client opens a gui and a webserver thread, the webserver is used to transfer the files
 
 If you have any questions, ask me!
 

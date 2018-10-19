@@ -6,7 +6,7 @@
     Author: MathIsSimple
     Using: Python 3.7.0
     Type: Build
-    Build Version: 1
+    Build Version: 1.1
 '''
 
 # Import core python needed modules
@@ -32,6 +32,7 @@ GatheredInfo  = False
 Reconnect     = True
 sock = None
 PORT = 64500
+WEBP = 80
 Info = None
 cmds = []
 
@@ -377,7 +378,7 @@ def sendArray(data):
             break
         else:
             sendData(content)
-            time.sleep(0.05)
+            time.sleep(0.1)
 
 def handleCommands():
     global Connected
@@ -430,12 +431,45 @@ def start():
             print("Attempting reconnect")
             start()
 
+def web():
+    websock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    websock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    websock.bind(('', WEBP))
+    websock.listen(1)
+
+    while True:
+        conn, addr = websock.accept()
+        request    = conn.recv(1024).decode()
+        url        = request.split("\n")[0][5:-10]
+
+        contents   = ""
+
+        try:
+            f = open(url, "rb")
+            contents = str(f.read())
+            f.close()
+        except FileNotFoundError:
+            contents = "Error: this file must not exist"
+
+        http_response = """\
+HTTP/1.1 200 OK
+
+"""+contents+"""\
+            
+"""
+
+        conn.sendall(http_response.encode())
+        conn.close()
+
 # Threads
 
 square = createSquare()
 
 t1 = Thread(target=GUI)
+t2 = Thread(target=web)
 t1.start()
+t2.start()
 
 start()
 t1.join()
+t2.join()

@@ -6,14 +6,15 @@
     Author: MathIsSimple
     Python Version: 3.7.0
     Type: Build
-    Build Version: 1
+    Build Version: 1.1
 '''
 
 # Import needed core python modules
 
-import time
+import requests
 import socket
 import random
+import time
 import json
 
 from sys import argv
@@ -25,8 +26,10 @@ from os  import mkdir
 
 characters    = "\"\\?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/;:.,éè'!&+*|`^@[]=#~-_<>(){}§$%µ£¤ç "
 bits_per_char = len(bin(len(characters))) - 2
-config = json.load(open("res/config.json"))
-PORT   = config["port"]
+config  = json.load(open("res/config.json"))
+HOST = config["host"]
+PORT = config["port"]
+WEBP = config["portWeb"]
 
 g = int(random.uniform(100, 7000))
 n = config["n"]
@@ -138,24 +141,6 @@ def VigenenereDecrypt(message):
         index = index + 1
     return output
 
-def getFilesInDir(dir):
-    files = []
-
-    for (dirpath, dirnames, filenames) in walk(dir):
-        files.extend(filenames)
-
-    return files
-
-def getFileExtension(f):
-    return f[-4:]
-
-def fileExists(f):
-    return path.isfile(f)
-
-def createWritableFile(loc):
-    f = open(loc, "w+")
-    return f
-
 # Hasing Functions
 
 def modify(message):
@@ -218,46 +203,9 @@ def send(data):
 def receiveData():
     rcv = decrypt(conn.recv(1024).decode("utf-8", "ignore"))
 
-    if rcv != "END":
-        f.write(encrypt(rcv))
-        f.write("\n")
-
     return rcv
 
-def createLog():
-    try:
-        mkdir("./../logs")
-        print("Created Log Folder")
-    except FileExistsError:
-        print("Log Folder Already Exists")
-    
-    logs = getFilesInDir("./../logs/")
-    biggest_number = 0
-    hadANumber     = False
-
-    for log in logs:
-        log_number = int(log[4:-4])
-        if hadANumber == True:
-            if log_number > biggest_number:
-                biggest_number = log_number
-        else:
-            biggest_number = log_number
-            hadANumber = True
-
-    log_number = biggest_number + 1
-
-    file_name = "log_"+str(log_number)
-    f1 = createWritableFile("./../logs/"+file_name+".txt")
-    f2 = createWritableFile("./../logs/data/"+file_name+".txt")
-
-    return f1, f2
-
-# Ask for the port if it hasn't been given as a command line argument
-
-sock, conn, addr = createConnexion("127.0.0.1", PORT)
-
-f, f2 = createLog()
-print("Created Log")
+sock, conn, addr = createConnexion(HOST, PORT)
 
 receivingInfo   = True
 sendingCommands = False
@@ -278,10 +226,9 @@ while True:
                 diffie = False
                 square = createSquare()
                 cipher = createCipher(key)
-                f2.write(str(key))
-                f2.close()
                 print("Key : " + str(key))
                 break
+    
     if receivingInfo:
         received = receiveData()
         if received != "END":
@@ -293,25 +240,32 @@ while True:
     if sendingCommands:
         command = input("Command To Execute ")
         if command != "END":
-            f.write(encrypt(command))
-            f.write("\n")
-            send(command)
             last_rcv_time = getTime()
 
-            while True:
-                current_time = getTime()
-                if (current_time - last_rcv_time >= 2000):
-                    break
-                    
-                received = receiveData()
-                if received != "":
-                    last_rcv_time = getTime()
-                    if received != "END":
-                        print(received)
-                    else:
+            if "open" in command:
+                text = requests.get("http://"+HOST+"/"+command[5:]).text
+                print(text)
+                f = open("downloads/file"+command[len(command)-4:], "w+")
+                f.write(text)
+                f.close()
+            else: 
+                send(command)
+                while True:
+                    current_time = getTime()
+                    if (current_time - last_rcv_time >= 2000):
                         break
+                        
+                    received = receiveData()
+                    if received != "":
+                        last_rcv_time = getTime()
+                        if received != "END":
+                            print(received)
+                        else:
+                            break
         else:
             send("END")
             f.close()
             sock.close()
             exit(0)
+
+t1.join()
