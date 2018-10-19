@@ -6,7 +6,7 @@
     Author: MathIsSimple
     Python Version: 3.7.0
     Type: Build
-    Build Version: 0.9
+    Build Version: 1
 '''
 
 # Import needed core python modules
@@ -32,10 +32,111 @@ g = int(random.uniform(100, 7000))
 n = config["n"]
 p = int(random.uniform(1, n))
 
-g_step_1 = (g**p) % n
-key      = 0
+g_step_1  = (g**p) % n
+key       = 0
+square    = ""
+cipher    = ""
 
 # File Manager Functions
+
+def createSquare():
+    square = [[" "] * len(characters)] * len(characters)
+
+    for i in range(len(characters)):
+        square[i] = characters[i:] + characters[:i]
+    
+    return square
+
+def createSquare():
+    square = [[" "] * len(characters)] * len(characters)
+
+    for i in range(len(characters)):
+        square[i] = characters[i:] + characters[:i]
+    
+    return square
+
+def createCipher(key):
+    return characters[:key % len(characters)]
+
+def createEndCipher(cipher, message):
+    i = 0
+    endCipher = ""
+    for p_i in range(len(message)):
+        if i >= len(cipher):
+            i = 0
+        endCipher = endCipher + cipher[i]
+        i = i + 1
+    return endCipher
+
+def VigenenereEncrypt(message):
+    global alphabet
+    global square
+    global cipher
+
+    endCipher = createEndCipher(cipher, message)
+
+    output = ""
+    index  = 0
+    for char in message:
+        indexInAlphabetOfMessageChar = -1
+        indexInAlphabetOfCipherChar  = -1
+        i = 0
+        for letter in characters:
+            if char == letter:
+                indexInAlphabetOfMessageChar = i
+
+            if endCipher[index] == letter:
+                indexInAlphabetOfCipherChar  = i
+
+            if indexInAlphabetOfCipherChar != -1 and indexInAlphabetOfMessageChar != -1:
+                break
+            
+            i = i + 1
+        
+        if indexInAlphabetOfMessageChar == -1:
+            print("One of the characters in your message is not in the alphabet")
+        else:
+            output = output + square[indexInAlphabetOfMessageChar][indexInAlphabetOfCipherChar]
+        
+        index = index + 1
+    return output
+
+def VigenenereDecrypt(message):
+    global alphabet
+    global square
+    global cipher
+
+    endCipher = createEndCipher(cipher, message)
+
+    output = ""
+    index  = 0
+    for char in message:
+        indexInAlphabetOfCipherChar  = -1
+        i = 0
+        for letter in characters:
+            if endCipher[index] == letter:
+                indexInAlphabetOfCipherChar  = i
+                break
+            
+            i = i + 1
+        
+        if indexInAlphabetOfCipherChar == -1:
+            print("One of the characters in your message is not in the alphabet")
+        else:
+            search = square[indexInAlphabetOfCipherChar]
+            out    = ""
+            i = 0
+            for letter in search:
+                if letter == char:
+                    out = characters[i]
+                    break
+                i = i + 1
+            if out == "":
+                print("error")
+            output = output + out
+        
+        index = index + 1
+    return output
 
 def getFilesInDir(dir):
     files = []
@@ -86,6 +187,7 @@ def delongify(message):
 
 def encrypt(message):
     output = modify(message)
+    output = VigenenereEncrypt(output)
     output = output[::-1]
     output = longify(output)
     return output
@@ -93,6 +195,7 @@ def encrypt(message):
 def decrypt(message):
     output = delongify(message)
     output = output[::-1]
+    output = VigenenereDecrypt(output)
     output = modify(output)
     return output
 
@@ -143,16 +246,17 @@ def createLog():
 
     log_number = biggest_number + 1
 
-    file_name = "log_"+str(log_number)+".txt"
-    f = createWritableFile("./../logs/"+file_name)
+    file_name = "log_"+str(log_number)
+    f1 = createWritableFile("./../logs/"+file_name+".txt")
+    f2 = createWritableFile("./../logs/data/"+file_name+".txt")
 
-    return f
+    return f1, f2
 
 # Ask for the port if it hasn't been given as a command line argument
 
 sock, conn, addr = createConnexion("127.0.0.1", PORT)
 
-f = createLog()
+f, f2 = createLog()
 print("Created Log")
 
 receivingInfo   = True
@@ -172,6 +276,10 @@ while True:
             if data != "":
                 key    = (int(data)**p) % n
                 diffie = False
+                square = createSquare()
+                cipher = createCipher(key)
+                f2.write(str(key))
+                f2.close()
                 print("Key : " + str(key))
                 break
     if receivingInfo:

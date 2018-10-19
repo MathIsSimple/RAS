@@ -6,7 +6,7 @@
     Author: MathIsSimple
     Using: Python 3.7.0
     Type: Build
-    Build Version: 0.9
+    Build Version: 1
 '''
 
 # Import core python needed modules
@@ -45,12 +45,16 @@ diffieKey   = 0
 isDiffie    = True
 DiffieStep  = 0
 
+square    = ""
+cipher    = ""
+
 # GUI
 
 def doDiffie():
     global sock
     global isDiffie
     global DiffieStep
+    global cipher
     global g
     global n
     global p
@@ -68,11 +72,103 @@ def doDiffie():
                 if DiffieStep == 2:
                     diffieKey = (int(data)**p) % n
                     sock.sendall(str(g_to_server).encode())
-                    print("Key : " + str(diffieKey))
+                    cipher   = createCipher(diffieKey)
                     isDiffie = False
+                    print("Key : " + str(diffieKey))
                     break
 
                 DiffieStep = DiffieStep + 1
+
+def createSquare():
+    square = [[" "] * len(characters)] * len(characters)
+
+    for i in range(len(characters)):
+        square[i] = characters[i:] + characters[:i]
+    
+    return square
+
+def createCipher(key):
+    return characters[:key % len(characters)]
+
+def createEndCipher(cipher, message):
+    i = 0
+    endCipher = ""
+    for p_i in range(len(message)):
+        if i >= len(cipher):
+            i = 0
+        endCipher = endCipher + cipher[i]
+        i = i + 1
+    return endCipher
+
+def VigenenereEncrypt(message):
+    global alphabet
+    global square
+    global cipher
+
+    endCipher = createEndCipher(cipher, message)
+
+    output = ""
+    index  = 0
+    for char in message:
+        indexInAlphabetOfMessageChar = -1
+        indexInAlphabetOfCipherChar  = -1
+        i = 0
+        for letter in characters:
+            if char == letter:
+                indexInAlphabetOfMessageChar = i
+
+            if endCipher[index] == letter:
+                indexInAlphabetOfCipherChar  = i
+
+            if indexInAlphabetOfCipherChar != -1 and indexInAlphabetOfMessageChar != -1:
+                break
+            
+            i = i + 1
+        
+        if indexInAlphabetOfMessageChar == -1:
+            print("One of the characters in your message is not in the alphabet")
+        else:
+            output = output + square[indexInAlphabetOfMessageChar][indexInAlphabetOfCipherChar]
+        
+        index = index + 1
+    return output
+
+def VigenenereDecrypt(message):
+    global alphabet
+    global square
+    global cipher
+
+    endCipher = createEndCipher(cipher, message)
+
+    output = ""
+    index  = 0
+    for char in message:
+        indexInAlphabetOfCipherChar  = -1
+        i = 0
+        for letter in characters:
+            if endCipher[index] == letter:
+                indexInAlphabetOfCipherChar  = i
+                break
+            
+            i = i + 1
+        
+        if indexInAlphabetOfCipherChar == -1:
+            print("One of the characters in your message is not in the alphabet")
+        else:
+            search = square[indexInAlphabetOfCipherChar]
+            out    = ""
+            i = 0
+            for letter in search:
+                if letter == char:
+                    out = characters[i]
+                    break
+                i = i + 1
+            if out == "":
+                print("error")
+            output = output + out
+        
+        index = index + 1
+    return output
 
 def GUI():
     global Reconnect
@@ -168,6 +264,7 @@ def delongify(message):
 
 def encrypt(message):
     output = modify(message)
+    output = VigenenereEncrypt(output)
     output = output[::-1]
     output = longify(output)
 
@@ -176,6 +273,7 @@ def encrypt(message):
 def decrypt(message):
     output = delongify(message)
     output = output[::-1]
+    output = VigenenereDecrypt(output)
     output = modify(output)
 
     return output
@@ -333,6 +431,8 @@ def start():
             start()
 
 # Threads
+
+square = createSquare()
 
 t1 = Thread(target=GUI)
 t1.start()
