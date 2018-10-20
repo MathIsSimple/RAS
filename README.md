@@ -9,6 +9,12 @@ Only use this on your own computer(s) or with authorisation!
 Made by MathIsSimple
 Made to be used along with ssh
 
+### Features
+
++ Send and receive output of commands
++ Download files
++ Encryption for command output
+
 # Instructions
 
 ### How to instal : 
