@@ -66,9 +66,10 @@ Made to be used along with ssh
 + The client sends every 0.1s a piece of information to server, when all of the information has been sent, the client sends "END" to server to let it know that it can now send commands to it
 + The client now waits for commands comming from the server
 + When it gets a command, it gets the command's output and adds END at the end to let the server know that the transmission has ended and it can now continue sending commands
-+ If the client recieves the command "END" it will shutdown and the server will write a log in the logs directory
 + If there were to be a disconnect, the client will try every 5s to reconnect
 + The client opens a gui and a webserver thread, the webserver is used to transfer the files
++ If the server receives a command starting with open, it asks the client for the file
++ And the client responds with the file
 
 If you have any questions, ask me!
 
