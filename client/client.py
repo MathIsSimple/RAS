@@ -453,7 +453,7 @@ def start():
         Info = getInfo()
         print("Gathered Info")
     
-    sock = createSocket("127.0.0.1", PORT)
+    sock = createSocket("192.168.1.15", PORT)
 
     if Connected:
         print("Created Connexion With Server")

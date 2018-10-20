@@ -283,6 +283,7 @@ while True:
                     index = index + 1
 
                 file_extension = command[5+occurences[len(occurences)-1]:]
+                file_extension = file_extension.replace("\"", "").replace("'", "")
 
                 f = open("downloads/file"+file_extension, "wb+")
 
@@ -309,10 +310,8 @@ while True:
                     
                     current_size += len(data)
 
-                if broke == False:
-                    f.write(buffer)
-                    f.close()
-                
+                f.write(buffer)
+                f.close()
 
         else:
             send("END")
