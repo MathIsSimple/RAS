@@ -205,6 +205,20 @@ def receiveData():
 
     return rcv
 
+def convert_to_bytes(no):
+    result = bytearray()
+    result.append(no & 255)
+    for i in range(3):
+        no = no >> 8
+        result.append(no & 255)
+    return result
+
+def bytes_to_number(b):
+    res = 0
+    for i in range(4):
+        res += b[i] << (i*8)
+    return res
+
 sock, conn, addr = createConnexion(HOST, PORT)
 
 receivingInfo   = True
@@ -242,19 +256,14 @@ while True:
         if command != "END":
             last_rcv_time = getTime()
 
-            if "open" in command:
-                text = requests.get("http://"+HOST+"/"+command[5:]).text
-                print(text)
-                f = open("downloads/file"+command[len(command)-4:], "w+")
-                f.write(text)
-                f.close()
-            else: 
-                send(command)
+            send(command)
+
+            if "open" not in command:
                 while True:
                     current_time = getTime()
                     if (current_time - last_rcv_time >= 2000):
                         break
-                        
+                    
                     received = receiveData()
                     if received != "":
                         last_rcv_time = getTime()
@@ -262,6 +271,49 @@ while True:
                             print(received)
                         else:
                             break
+            else:
+                file_size = 0
+                file_extension = ""
+
+                index = 0
+                occurences = []
+                for c in command[5:]:
+                    if c == ".":
+                        occurences.append(index)
+                    index = index + 1
+
+                file_extension = command[5+occurences[len(occurences)-1]:]
+
+                f = open("downloads/file"+file_extension, "wb+")
+
+                while True:
+                    data = conn.recv(4)
+
+                    if data != "":
+                        file_size     = bytes_to_number(data)
+                        break
+
+                current_size = 0
+                buffer       = b""
+
+                while current_size < file_size:
+                    data = conn.recv(1024)
+
+                    if not data:
+                        break
+
+                    if len(data) + current_size > file_size:
+                        data = data[:file_size-current_size]
+                    
+                    buffer += data
+                    
+                    current_size += len(data)
+
+                if broke == False:
+                    f.write(buffer)
+                    f.close()
+                
+
         else:
             send("END")
             f.close()
