@@ -14,8 +14,10 @@
 import requests
 import socket
 import random
+import string
 import time
 import json
+import re
 
 from sys import argv
 from os  import walk
@@ -258,65 +260,92 @@ while True:
 
             send(command)
 
-            if "open" not in command:
+            if command.startswith("download") == True:
+                output_file_size = 0
+                current_size   = 0
+                buffer         = b""
+                file_extension = ""
+
+                index = 0
+                occurences = []
+
+                for c in command[len("download")+1:]:
+                    if c == ".":
+                        occurences.append(index)
+                    
+                    index = index + 1
+
+                output_file_extension = command[5+occurences[len(occurences)-1]:]
+                output_file_extension = output_file_extension.replace("\"", "").replace("'", "")
+                output_file_name = "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
+                output_file      = open("./downloads/" + output_file_name + output_file_extension, "wb+")
+
+                while True:
+                    data = conn.recv(4)
+
+                    if data != "":
+                        output_file_size = bytes_to_number(data)
+                        break
+
+                while current_size < output_file_size:
+                    data = conn.recv(1024)
+
+                    if not data:
+                        break
+
+                    if len(data) + current_size > output_file_size:
+                        data = data[:output_file_size - current_size]
+                    
+                    buffer       += data
+                    current_size += len(data)
+
+                output_file.write(buffer)
+                output_file.close()
+            elif command.startswith("upload") == True:
+                io = re.split(" ", command[len("upload")+1:])
+                i  = io[0]
+                o  = io[1]
+
+                input_file_location = "./uploads/" + i
+
+                try:
+                    input_file_size = path.getsize(input_file_location)
+                    input_file      = open(input_file_location, "rb")
+
+                    conn.send(convert_to_bytes(input_file_size))
+                    time.sleep(0.2)
+
+                    data = input_file.read(1024)
+
+                    while True:
+                        conn.send(data)
+                        data = input_file.read(1024)
+
+                        if not data:
+                            break
+                        
+                    input_file.close()
+                except FileNotFoundError:
+                    print("No such file in directory")
+                    continue
+            else:
                 while True:
                     current_time = getTime()
                     if (current_time - last_rcv_time >= 2000):
                         break
                     
                     received = receiveData()
+
                     if received != "":
                         last_rcv_time = getTime()
+
                         if received != "END":
                             print(received)
                         else:
                             break
-            else:
-                file_size = 0
-                file_extension = ""
-
-                index = 0
-                occurences = []
-                for c in command[5:]:
-                    if c == ".":
-                        occurences.append(index)
-                    index = index + 1
-
-                file_extension = command[5+occurences[len(occurences)-1]:]
-                file_extension = file_extension.replace("\"", "").replace("'", "")
-
-                f = open("downloads/file"+file_extension, "wb+")
-
-                while True:
-                    data = conn.recv(4)
-
-                    if data != "":
-                        file_size     = bytes_to_number(data)
-                        break
-
-                current_size = 0
-                buffer       = b""
-
-                while current_size < file_size:
-                    data = conn.recv(1024)
-
-                    if not data:
-                        break
-
-                    if len(data) + current_size > file_size:
-                        data = data[:file_size-current_size]
-                    
-                    buffer += data
-                    
-                    current_size += len(data)
-
-                f.write(buffer)
-                f.close()
 
         else:
             send("END")
             f.close()
             sock.close()
             exit(0)
-
-t1.join()

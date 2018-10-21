@@ -40,7 +40,8 @@ Made to be used along with ssh
 + Got to the exec folder
 + Open the server
 + Open one or more clients
-+ On the server, you can get the contents of a file by type open <File name> ex: open myfile.txt (position relative to client.py)
++ You can download a file into the server/downloads folder by typing "download <file>" ex: "download myfile.txt"
++ You can upload a file to the client by typing "upload <input_file> <output_file>" ex: "upload myfile.txt out.txt"
 
 # The protocol
 

