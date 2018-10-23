@@ -37,8 +37,14 @@ Only use this on your own computer(s) or with authorisation!
 ### How to use : 
 
 + Got to the exec folder
-+ Open the server
-+ Open one or more clients
++ Go into win/ or linux (if you are on mac or linux)
++ If win/
+	* Double click on server.bat and double click on client.bat in python/ or in python3/
++ IF linux/
+	* Open the terminal and navigate to the linux/ folder
+	* Go to python/ or python3/ and type sh start_server.sh
+	* GO to python/ or python3/ and type sh start_client.sh
+		
 + Once you are connected with a client, you can type HELP to get the list of supported commands and how to use them
 
 # The protocol
@@ -77,6 +83,14 @@ Only use this on your own computer(s) or with authorisation!
 + And the client responds with the file
 
 # Change Logs
+
+## Commit 37
+
++ Added executables for linux/mac
+
+## Commit 36
+
++ Not Much
 
 ## Commit 35
 
