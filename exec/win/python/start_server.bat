@@ -1,3 +1,3 @@
-cd ../server/
+cd ../../../server/
 python server.py
 pause
