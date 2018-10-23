@@ -1,6 +1,23 @@
 {
     "n": 59333,
     "port": 64500,
-    "portWeb": 80,
-    "host": "192.168.1.15"
+    "host": "127.0.0.1",
+    "commands": [
+        {
+            "name": "HELP",
+            "desc": "Shows this list"
+        },
+        {
+            "name": "END",
+            "desc": "stops the program on the client and on the server"
+        },
+        {
+            "name": "download <FILE TO DOWNLOAD>",
+            "desc": "Downloads a file from the client to the server/downloads folder\nExemple: DOWNLOAD myfile.txt\nWarning: Only files under or equal 1GB can be transfered!"
+        },
+        {
+            "name": "upload",
+            "desc": "upload a file from server/uploads to the client's computer\nWhen executed it will ask you the input file and the file destination\nWarning: Only files under or equal 1GB can be transfered!"
+        }
+    ]
 }

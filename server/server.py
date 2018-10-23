@@ -5,8 +5,7 @@
     File name: server.py
     Author: MathIsSimple
     Python Version: 3.7.0
-    Type: Build
-    Build Version: 1.1
+    Build Version: 1.2
 '''
 
 # Import needed core python modules
@@ -31,7 +30,7 @@ bits_per_char = len(bin(len(characters))) - 2
 config  = json.load(open("res/config.json"))
 HOST = config["host"]
 PORT = config["port"]
-WEBP = config["portWeb"]
+CMDS = config["commands"]
 
 g = int(random.uniform(100, 7000))
 n = config["n"]
@@ -221,7 +220,13 @@ def bytes_to_number(b):
         res += b[i] << (i*8)
     return res
 
+print("The server is now running.. Awating connections")
+
 sock, conn, addr = createConnexion(HOST, PORT)
+
+print("At any time, you can type HELP to get the list of supported commands")
+
+print("\n\n")
 
 receivingInfo   = True
 sendingCommands = False
@@ -244,6 +249,8 @@ while True:
                 cipher = createCipher(key)
                 print("Key : " + str(key))
                 break
+
+        print("\n")
     
     if receivingInfo:
         received = receiveData()
@@ -252,10 +259,24 @@ while True:
         else:
             receivingInfo   = False
             sendingCommands = True
+            print("\n")
         
     if sendingCommands:
         command = input("Command To Execute ")
-        if command != "END":
+        if command == "END":
+            send("END")
+            sock.close()
+            exit(0)
+        elif command == "HELP":
+            print("\nNow Prining all supported commands\n")
+            for command in CMDS:
+                name = command["name"]
+                desc = command["desc"]
+
+                print("Name : " + str(name))
+                print("Desc : " + str(desc))
+                print("\n")
+        else:
             last_rcv_time = getTime()
 
             send(command)
@@ -264,21 +285,23 @@ while True:
                 output_file_size = 0
                 current_size   = 0
                 buffer         = b""
-                file_extension = ""
 
-                index = 0
-                occurences = []
+                doStop = False
 
-                for c in command[len("download")+1:]:
-                    if c == ".":
-                        occurences.append(index)
-                    
-                    index = index + 1
+                while True:
+                    data = conn.recv(1024).decode()
 
-                output_file_extension = command[5+occurences[len(occurences)-1]:]
-                output_file_extension = output_file_extension.replace("\"", "").replace("'", "")
-                output_file_name = "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
-                output_file      = open("./downloads/" + output_file_name + output_file_extension, "wb+")
+                    if data != "":
+                        if data == "STOP UPLOAD PROCESS":
+                            doStop = True
+                    break
+
+                if doStop == True:
+                    continue
+                
+                output_file = open("./downloads/" + command[len("download")+1:], "wb+")
+
+                time.sleep(0.1)
 
                 while True:
                     data = conn.recv(4)
@@ -302,32 +325,37 @@ while True:
                 output_file.write(buffer)
                 output_file.close()
             elif command.startswith("upload") == True:
-                io = re.split(" ", command[len("upload")+1:])
-                i  = io[0]
-                o  = io[1]
-
+                i = input("Input File : ")
+                
                 input_file_location = "./uploads/" + i
 
-                try:
-                    input_file_size = path.getsize(input_file_location)
-                    input_file      = open(input_file_location, "rb")
-
-                    conn.send(convert_to_bytes(input_file_size))
-                    time.sleep(0.2)
-
-                    data = input_file.read(1024)
-
-                    while True:
-                        conn.send(data)
-                        data = input_file.read(1024)
-
-                        if not data:
-                            break
-                        
-                    input_file.close()
-                except FileNotFoundError:
-                    print("No such file in directory")
+                if path.isfile(input_file_location) == False:
+                    conn.send("STOP UPLOAD PROCESS".encode())
+                    print("\nThis file doesn't exist (check the spelling and if it in the server/uploads folder)\n")
                     continue
+
+                o = input("Output File : ")
+
+                conn.send(o.encode())
+
+                input_file_size = path.getsize(input_file_location)
+                input_file      = open(input_file_location, "rb")
+
+                conn.send(convert_to_bytes(input_file_size))
+                time.sleep(0.2)
+
+                data = input_file.read(1024)
+
+                while True:
+                    conn.send(data)
+                    data = input_file.read(1024)
+                        
+                    if not data:
+                        break
+                        
+                input_file.close()
+
+                print("Success !")
             else:
                 while True:
                     current_time = getTime()
@@ -343,9 +371,3 @@ while True:
                             print(received)
                         else:
                             break
-
-        else:
-            send("END")
-            f.close()
-            sock.close()
-            exit(0)

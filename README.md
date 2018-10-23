@@ -1,13 +1,16 @@
-# Warning 
+# RAS : Remote Acces Software
+
+This project enables you to send commands to another pc and receive the output of that command remotly.
+This also enables you transfer files
+
+Made by MathIsSimple
+Made to be used along with ssh
+
+### Warning 
 
 I have created this project to learn about custom encoding and python sockets, this projected isn't made to be used with maliscious intent and should be used in my opinion like ssh is.
 
 Only use this on your own computer(s) or with authorisation!
-
-# INFO
-
-Made by MathIsSimple
-Made to be used along with ssh
 
 ### Features
 
@@ -21,10 +24,6 @@ Made to be used along with ssh
 
 + Install git [From this link](https://git-scm.com/)
 + install python3 [From this link](https://www.python.org/)
-+ Install pygame (for the gui)
-    ```
-    pip install pygame
-    ```
 + Install requests (for the ip information)
     ```
     pip install requests
@@ -40,8 +39,7 @@ Made to be used along with ssh
 + Got to the exec folder
 + Open the server
 + Open one or more clients
-+ You can download a file into the server/downloads folder by typing "download <file>" ex: "download myfile.txt"
-+ You can upload a file to the client by typing "upload <input_file> <output_file>" ex: "upload myfile.txt out.txt"
++ Once you are connected with a client, you can type HELP to get the list of supported commands and how to use them
 
 # The protocol
 
@@ -78,6 +76,14 @@ Made to be used along with ssh
 + If the server receives a command starting with open, it asks the client for the file
 + And the client responds with the file
 
-If you have any questions, ask me!
+# Change Logs
 
-Made with passion for programming!
+## Commit 35
+
++ Now handles errors without buging out or crashing!
++ you can download and upload files with spaces in them
++ There now is an init.bat file which removes the placeholder.txt files that are here to make so that git puts it in the repo
++ When you download a file from the client's computer, it now shows it's real name in you server/downloads/ folder
++ Removed the GUI because it had no purpose
+
+If you have any questions or ideas, make a pull request or an issue.
