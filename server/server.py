@@ -135,8 +135,6 @@ def VigenenereDecrypt(message):
                     out = characters[i]
                     break
                 i = i + 1
-            if out == "":
-                print("error")
             output = output + out
         
         index = index + 1
@@ -172,17 +170,15 @@ def delongify(message):
     return output
 
 def encrypt(message):
-    output = modify(message)
+    output = message[::-1]
     output = VigenenereEncrypt(output)
-    output = output[::-1]
-    output = longify(output)
+
     return output
 
 def decrypt(message):
-    output = delongify(message)
+    output = VigenenereDecrypt(message)
     output = output[::-1]
-    output = VigenenereDecrypt(output)
-    output = modify(output)
+
     return output
 
 # Create Socket Connection

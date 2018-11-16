@@ -71,7 +71,8 @@ def doDiffie():
                     g_to_server = (g**p) % n
                 if DiffieStep == 2:
                     diffieKey = (int(data)**p) % n
-                    sock.sendall(str(g_to_server).encode())
+                    time.sleep(0.25)
+                    sock.send((str(g_to_server) + "\n").encode())
                     cipher   = createCipher(diffieKey)
                     isDiffie = False
                     print("Key : " + str(diffieKey))
@@ -203,18 +204,14 @@ def delongify(message):
     return output
 
 def encrypt(message):
-    output = modify(message)
+    output = message[::-1]
     output = VigenenereEncrypt(output)
-    output = output[::-1]
-    output = longify(output)
 
     return output
 
 def decrypt(message):
-    output = delongify(message)
+    output = VigenenereDecrypt(message)
     output = output[::-1]
-    output = VigenenereDecrypt(output)
-    output = modify(output)
 
     return output
 
@@ -310,7 +307,7 @@ def sendData(data):
 
     if Connected == True:
         data = encrypt(str(data))
-        data = data.encode()
+        data = (data + "\n").encode()
         sock.sendall(data)
 
 def sendArray(data):
